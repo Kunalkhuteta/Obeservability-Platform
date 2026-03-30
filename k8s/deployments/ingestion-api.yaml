@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion-api
+  labels:
+    app: ingestion-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: ingestion-api
+  template:
+    metadata:
+      labels:
+        app: ingestion-api
+    spec:
+      containers:
+        - name: ingestion-api
+          image: your-registry/ingestion-api:latest
+          ports:
+            - containerPort: 4000
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: observability-secrets
+                  key: redis-url
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingestion-api
+spec:
+  selector:
+    app: ingestion-api
+  ports:
+    - port: 4000
+      targetPort: 4000
+  type: LoadBalancer

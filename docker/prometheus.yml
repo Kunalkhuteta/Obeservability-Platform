@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Scrape Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Scrape our ingestion API (it exposes a /metrics endpoint)
+  - job_name: 'ingestion-api'
+    static_configs:
+      - targets: ['ingestion-api:4000']
+    metrics_path: '/metrics'
+
+  # Scrape query API
+  - job_name: 'query-api'
+    static_configs:
+      - targets: ['query-api:4001']
+    metrics_path: '/metrics'

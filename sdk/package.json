@@ -1,0 +1,10 @@
+{
+  "name": "@observability/sdk",
+  "version": "1.0.0",
+  "description": "Drop-in SDK for sending metrics and logs to your observability platform",
+  "main": "src/index.js",
+  "dependencies": {
+    "axios": "^1.6.2",
+    "os-utils": "^0.0.14"
+  }
+}

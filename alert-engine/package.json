@@ -1,0 +1,19 @@
+{
+  "name": "alert-engine",
+  "version": "1.0.0",
+  "description": "Evaluates alert rules against live metrics and sends notifications",
+  "scripts": {
+    "dev": "nodemon src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.33.2",
+    "axios": "^1.6.2",
+    "node-cron": "^3.0.3",
+    "pg": "^8.11.3",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
