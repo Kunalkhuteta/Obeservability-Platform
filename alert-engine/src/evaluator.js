@@ -7,8 +7,9 @@ const influx = new InfluxDB({
   token: process.env.INFLUX_TOKEN || 'my-super-secret-token',
 });
 const queryApi = influx.getQueryApi(process.env.INFLUX_ORG || 'observability');
-
-const db = new Pool({ connectionString: process.env.POSTGRES_URL });
+const db = new Pool({
+  connectionString: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@127.0.0.1:5434/alerts',
+});
 
 async function getAlertRules() {
   const result = await db.query(
