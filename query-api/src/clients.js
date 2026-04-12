@@ -11,12 +11,12 @@ const influxQuery = influx.getQueryApi(process.env.INFLUX_ORG || 'observability'
 const elastic = new Client({ node: process.env.ELASTICSEARCH_URL || 'http://localhost:9200' });
 
 const pg = new Pool({
-  connectionString: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@localhost:5432/alerts',
+  connectionString: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@127.0.0.1:5434/alerts',
 });
 
 // ── Prevent unhandled 'error' events from crashing the process ──────────────
 pg.on('error', (err) => {
-  console.error('[pg] idle client error:', err.message);
+  console.error('[pg] unexpected error:', err.message);
 });
 
 module.exports = { influxQuery, elastic, pg };

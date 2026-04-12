@@ -1,0 +1,75 @@
+Terminal 1 — Start all infrastructure
+docker-compose up -d
+
+Wait about 30 seconds, then check everything is healthy:
+
+docker-compose ps
+
+All 4 containers (redis, influxdb, elasticsearch, postgres) should show healthy. If any show starting, wait a bit more and run it again.
+
+Terminal 2 — Ingestion API
+
+cd ingestion-api
+npm run dev
+
+Expected output: [ingestion-api] listening on port 4000
+
+Terminal 3 — Stream Processor
+
+cd stream-processor
+npm run dev
+
+Expected output: [stream-processor] starting...
+
+Terminal 4 — Query API
+
+cd query-api
+npm run dev
+
+Expected output: [query-api] HTTP + WS listening on port 4001
+
+Terminal 5 — Alert Engine
+
+cd alert-engine
+npm run dev
+
+Expected output: [alert-engine] rule evaluation scheduled every 30s
+
+Terminal 6 — Dashboard
+
+cd dashboard
+npm start
+
+This automatically opens http://localhost:3000 in your browser.
+
+Terminal 7 — SDK example (generates fake data so you can see the dashboard working)
+
+cd sdk
+node example.js
+
+```
+Expected output: `[sdk] started — flushing every 3000ms`
+
+---
+
+## Verify everything works
+
+Open these URLs in your browser:
+
+| URL | What you should see |
+|---|---|
+| `http://localhost:4000/health` | `{"status":"ok","service":"ingestion-api"}` |
+| `http://localhost:4001/health` | `{"status":"ok","service":"query-api"}` |
+| `http://localhost:3000` | The live dashboard |
+| `http://localhost:8086` | InfluxDB UI |
+| `http://localhost:9200` | Elasticsearch info JSON |
+
+---
+
+## Start order matters
+
+Always start in this order — each layer depends on the one before it:
+```
+docker-compose up     →   ingestion-api   →   stream-processor
+                      →   query-api       →   alert-engine
+                      →   dashboard       →   sdk example
