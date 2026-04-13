@@ -1,7 +1,9 @@
 version: '3.8'
 
 services:
-  # ── Message Queue ──────────────────────────────────────
+
+  # ── Infrastructure ─────────────────────────────────────────────────────────
+
   redis:
     image: redis:7-alpine
     ports:
@@ -14,7 +16,6 @@ services:
       timeout: 3s
       retries: 5
 
-  # ── Metrics Storage ────────────────────────────────────
   influxdb:
     image: influxdb:2.7-alpine
     ports:
@@ -34,7 +35,6 @@ services:
       timeout: 5s
       retries: 5
 
-  # ── Log Storage ────────────────────────────────────────
   elasticsearch:
     image: elasticsearch:8.11.0
     ports:
@@ -51,7 +51,6 @@ services:
       timeout: 10s
       retries: 10
 
-  # ── Alert Rules Storage ────────────────────────────────
   postgres:
     image: postgres:16-alpine
     ports:
@@ -69,6 +68,121 @@ services:
       interval: 5s
       timeout: 3s
       retries: 5
+
+  # ── App Services ───────────────────────────────────────────────────────────
+  # NOTE: Inside Docker, services talk to each other using service names
+  # e.g. redis://redis:6379  NOT  redis://localhost:6379
+  # Postgres is reached as postgres:5432 (internal port, not 5434)
+
+  ingestion-api:
+    build:
+      context: ./ingestion-api
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - INGESTION_API_PORT=4000
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:4000/health', r => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  stream-processor:
+    build:
+      context: ./stream-processor
+      dockerfile: Dockerfile
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=my-super-secret-token
+      - INFLUX_ORG=observability
+      - INFLUX_BUCKET=metrics
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    depends_on:
+      redis:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    restart: unless-stopped
+
+  query-api:
+    build:
+      context: ./query-api
+      dockerfile: Dockerfile
+    ports:
+      - "4001:4001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=my-super-secret-token
+      - INFLUX_ORG=observability
+      - INFLUX_BUCKET=metrics
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/alerts
+      - QUERY_API_PORT=4001
+    depends_on:
+      redis:
+        condition: service_healthy
+      influxdb:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:4001/health', r => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  alert-engine:
+    build:
+      context: ./alert-engine
+      dockerfile: Dockerfile
+    environment:
+      - INFLUX_URL=http://influxdb:8086
+      - INFLUX_TOKEN=my-super-secret-token
+      - INFLUX_ORG=observability
+      - INFLUX_BUCKET=metrics
+      - POSTGRES_URL=postgresql://postgres:postgres@postgres:5432/alerts
+      - SLACK_WEBHOOK_URL=${SLACK_WEBHOOK_URL}
+    depends_on:
+      influxdb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - query-api
+    restart: unless-stopped
+
+  sdk-example:
+    build:
+      context: ./sdk
+      dockerfile: Dockerfile
+    environment:
+      - INGESTION_URL=http://ingestion-api:4000
+    depends_on:
+      ingestion-api:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   redis_data:
   influx_data:

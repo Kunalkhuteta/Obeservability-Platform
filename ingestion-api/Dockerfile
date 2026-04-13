@@ -7,6 +7,6 @@ RUN npm install --only=production
 
 COPY src/ ./src/
 
-EXPOSE 4000
+EXPOSE 4001
 
 CMD ["node", "src/index.js"]
