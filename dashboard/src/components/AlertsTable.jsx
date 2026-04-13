@@ -2,37 +2,30 @@ import React from 'react';
 
 // Shows severity as a colored badge
 function SeverityBadge({ severity }) {
-  const colors = {
-    critical: { bg: '#ffebee', text: '#c62828' },
-    warning:  { bg: '#fff8e1', text: '#f57f17' },
-  };
-  const c = colors[severity] || colors.warning;
+  const isCritical = severity === 'critical';
   return (
-    <span style={{
-      background: c.bg, color: c.text,
-      padding: '2px 10px', borderRadius: 20, fontSize: 11, fontWeight: 500,
-    }}>
+    <span className={`status-badge ${isCritical ? 'critical' : 'warning'}`}>
       {severity}
     </span>
   );
 }
 
-// Toggle switch component
 function Toggle({ enabled, onChange }) {
   return (
     <div
       onClick={onChange}
       style={{
         width: 40, height: 22, borderRadius: 11, cursor: 'pointer',
-        background: enabled ? '#4f46e5' : '#d1d5db',
-        position: 'relative', transition: 'background 0.2s',
+        background: enabled ? 'var(--accent-color)' : 'var(--border-color)',
+        position: 'relative', transition: 'var(--transition)',
       }}
     >
       <div style={{
         position: 'absolute',
         top: 3, left: enabled ? 21 : 3,
         width: 16, height: 16, borderRadius: '50%',
-        background: '#fff', transition: 'left 0.2s',
+        background: 'var(--bg-card)', transition: 'var(--transition)',
+        boxShadow: 'var(--shadow-sm)'
       }} />
     </div>
   );
@@ -57,17 +50,12 @@ function AlertsTable({ rules, onToggle }) {
   }
 
   return (
-    <div style={{ overflowX: 'auto' }}>
-      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+    <div className="data-table-container">
+      <table className="data-table">
         <thead>
-          <tr style={{ borderBottom: '2px solid #f0f0f0' }}>
+          <tr>
             {['Name', 'Metric', 'Condition', 'Duration', 'Severity', 'Enabled'].map((h) => (
-              <th key={h} style={{
-                textAlign: 'left', padding: '10px 16px',
-                fontSize: 12, color: '#666', fontWeight: 500,
-              }}>
-                {h}
-              </th>
+              <th key={h}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -76,24 +64,23 @@ function AlertsTable({ rules, onToggle }) {
             <tr
               key={rule.id}
               style={{
-                borderBottom: '1px solid #f9f9f9',
                 opacity: rule.enabled ? 1 : 0.5,
               }}
             >
-              <td style={{ padding: '12px 16px', fontWeight: 500 }}>{rule.name}</td>
-              <td style={{ padding: '12px 16px', fontFamily: 'monospace', color: '#4f46e5' }}>
+              <td style={{ fontWeight: 500 }}>{rule.name}</td>
+              <td style={{ fontFamily: 'monospace', color: 'var(--accent-color)' }}>
                 {rule.metric}
               </td>
-              <td style={{ padding: '12px 16px', fontFamily: 'monospace' }}>
+              <td style={{ fontFamily: 'monospace' }}>
                 {formatCondition(rule.condition, rule.threshold)}
               </td>
-              <td style={{ padding: '12px 16px', color: '#666' }}>
+              <td style={{ color: 'var(--text-secondary)' }}>
                 {rule.duration_s}s
               </td>
-              <td style={{ padding: '12px 16px' }}>
+              <td>
                 <SeverityBadge severity={rule.severity} />
               </td>
-              <td style={{ padding: '12px 16px' }}>
+              <td>
                 <Toggle
                   enabled={rule.enabled}
                   onChange={() => onToggle(rule.id, !rule.enabled)}

@@ -13,17 +13,11 @@ const DEFAULT = {
 function Field({ label, children }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: 1, minWidth: 140 }}>
-      <label style={{ fontSize: 12, color: '#666', fontWeight: 500 }}>{label}</label>
-      {children}
+      <label className="label-base">{label}</label>
+      {React.cloneElement(children, { className: 'input-base' })}
     </div>
   );
 }
-
-const inputStyle = {
-  padding: '8px 10px', borderRadius: 8, border: '1px solid #e0e0e0',
-  fontSize: 13, outline: 'none', background: '#fff',
-  color: '#111',
-};
 
 // Form for creating a new alert rule
 // onSubmit: called with the new rule object when form is submitted
@@ -54,22 +48,15 @@ function CreateRuleForm({ onSubmit, loading }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{
-      background: '#f8f9ff',
-      border: '1px solid #e8e8ff',
-      borderRadius: 12,
-      padding: 20,
-      marginBottom: 24,
-    }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 16 }}>
+    <form onSubmit={handleSubmit} className="card-panel" style={{ marginBottom: 24, padding: 24 }}>
+      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 16, color: 'var(--text-primary)' }}>
         Create new alert rule
       </div>
 
       {/* Row 1: Name + Metric */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
         <Field label="Rule name">
           <input
-            style={inputStyle}
             placeholder="e.g. High CPU"
             value={form.name}
             onChange={(e) => set('name', e.target.value)}
@@ -77,7 +64,7 @@ function CreateRuleForm({ onSubmit, loading }) {
         </Field>
 
         <Field label="Metric">
-          <select style={inputStyle} value={form.metric} onChange={(e) => set('metric', e.target.value)}>
+          <select value={form.metric} onChange={(e) => set('metric', e.target.value)}>
             <option value="cpu_usage">cpu_usage</option>
             <option value="memory_used_pct">memory_used_pct</option>
             <option value="memory_free_mb">memory_free_mb</option>
@@ -89,9 +76,9 @@ function CreateRuleForm({ onSubmit, loading }) {
       </div>
 
       {/* Row 2: Condition + Threshold + Duration + Severity */}
-      <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
         <Field label="Condition">
-          <select style={inputStyle} value={form.condition} onChange={(e) => set('condition', e.target.value)}>
+          <select value={form.condition} onChange={(e) => set('condition', e.target.value)}>
             <option value="gt">greater than (&gt;)</option>
             <option value="lt">less than (&lt;)</option>
             <option value="eq">equal to (=)</option>
@@ -100,7 +87,6 @@ function CreateRuleForm({ onSubmit, loading }) {
 
         <Field label="Threshold">
           <input
-            style={inputStyle}
             type="number"
             placeholder="e.g. 85"
             value={form.threshold}
@@ -110,7 +96,6 @@ function CreateRuleForm({ onSubmit, loading }) {
 
         <Field label="Duration (seconds)">
           <input
-            style={inputStyle}
             type="number"
             value={form.duration_s}
             onChange={(e) => set('duration_s', e.target.value)}
@@ -118,7 +103,7 @@ function CreateRuleForm({ onSubmit, loading }) {
         </Field>
 
         <Field label="Severity">
-          <select style={inputStyle} value={form.severity} onChange={(e) => set('severity', e.target.value)}>
+          <select value={form.severity} onChange={(e) => set('severity', e.target.value)}>
             <option value="warning">warning</option>
             <option value="critical">critical</option>
           </select>
@@ -127,19 +112,15 @@ function CreateRuleForm({ onSubmit, loading }) {
 
       {/* Error message */}
       {error && (
-        <div style={{ color: '#c62828', fontSize: 13, marginBottom: 12 }}>{error}</div>
+        <div style={{ color: 'var(--danger-color)', fontSize: 13, marginBottom: 12 }}>{error}</div>
       )}
 
       {/* Submit */}
       <button
         type="submit"
         disabled={loading}
-        style={{
-          background: loading ? '#a5b4fc' : '#4f46e5',
-          color: '#fff', border: 'none',
-          padding: '9px 24px', borderRadius: 8,
-          fontSize: 13, fontWeight: 500, cursor: loading ? 'not-allowed' : 'pointer',
-        }}
+        className="btn-primary"
+        style={{ cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
       >
         {loading ? 'Creating...' : 'Create rule'}
       </button>

@@ -82,30 +82,22 @@ function AlertsPage() {
   return (
     <div>
       {/* ── Summary bar ───────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-        <div style={{
-          background: '#eef2ff', borderRadius: 10, padding: '14px 20px', flex: 1, minWidth: 120,
-        }}>
-          <div style={{ fontSize: 12, color: '#6366f1' }}>Total rules</div>
-          <div style={{ fontSize: 28, fontWeight: 600, color: '#3730a3' }}>{rules.length}</div>
+      <div className="grid-cards">
+        <div className="card-panel" style={{ flex: 1, minWidth: 120, background: 'var(--accent-light)', borderColor: 'transparent' }}>
+          <div style={{ fontSize: 12, color: 'var(--accent-color)', fontWeight: 600 }}>Total rules</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--accent-hover)' }}>{rules.length}</div>
         </div>
-        <div style={{
-          background: '#f0fdf4', borderRadius: 10, padding: '14px 20px', flex: 1, minWidth: 120,
-        }}>
-          <div style={{ fontSize: 12, color: '#16a34a' }}>Active</div>
-          <div style={{ fontSize: 28, fontWeight: 600, color: '#15803d' }}>{enabledCount}</div>
+        <div className="card-panel" style={{ flex: 1, minWidth: 120, background: 'var(--success-light)', borderColor: 'transparent' }}>
+          <div style={{ fontSize: 12, color: 'var(--success-color)', fontWeight: 600 }}>Active</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--success-color)' }}>{enabledCount}</div>
         </div>
-        <div style={{
-          background: '#fff5f5', borderRadius: 10, padding: '14px 20px', flex: 1, minWidth: 120,
-        }}>
-          <div style={{ fontSize: 12, color: '#dc2626' }}>Critical rules</div>
-          <div style={{ fontSize: 28, fontWeight: 600, color: '#b91c1c' }}>{criticalCount}</div>
+        <div className="card-panel" style={{ flex: 1, minWidth: 120, background: 'var(--danger-light)', borderColor: 'transparent' }}>
+          <div style={{ fontSize: 12, color: 'var(--danger-color)', fontWeight: 600 }}>Critical rules</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--danger-color)' }}>{criticalCount}</div>
         </div>
-        <div style={{
-          background: '#fffbeb', borderRadius: 10, padding: '14px 20px', flex: 1, minWidth: 120,
-        }}>
-          <div style={{ fontSize: 12, color: '#d97706' }}>Fired today</div>
-          <div style={{ fontSize: 28, fontWeight: 600, color: '#b45309' }}>{history.length}</div>
+        <div className="card-panel" style={{ flex: 1, minWidth: 120, background: 'var(--warning-light)', borderColor: 'transparent' }}>
+          <div style={{ fontSize: 12, color: 'var(--warning-color)', fontWeight: 600 }}>Fired today</div>
+          <div style={{ fontSize: 28, fontWeight: 600, color: 'var(--warning-color)' }}>{history.length}</div>
         </div>
       </div>
 
@@ -133,25 +125,19 @@ function AlertsPage() {
       <CreateRuleForm onSubmit={handleCreate} loading={creating} />
 
       {/* ── Rules table ───────────────────────────────────────────────────── */}
-      <div style={{
-        background: '#fff', borderRadius: 12,
-        border: '1px solid #eee', padding: 20, marginBottom: 24,
-      }}>
-        <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 16 }}>
+      <div className="card-panel" style={{ marginBottom: 24 }}>
+        <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 16, color: 'var(--text-primary)' }}>
           Alert rules
           {loadingRules && (
-            <span style={{ fontSize: 12, color: '#999', marginLeft: 8 }}>loading...</span>
+            <span style={{ fontSize: 12, color: 'var(--text-secondary)', marginLeft: 8 }}>loading...</span>
           )}
         </div>
         <AlertsTable rules={rules} onToggle={handleToggle} />
       </div>
 
       {/* ── Alert history ─────────────────────────────────────────────────── */}
-      <div style={{
-        background: '#fff', borderRadius: 12,
-        border: '1px solid #eee', padding: 20,
-      }}>
-        <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 16 }}>
+      <div className="card-panel">
+        <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 16, color: 'var(--text-primary)' }}>
           Recent alert history
         </div>
         <AlertHistory events={history} />

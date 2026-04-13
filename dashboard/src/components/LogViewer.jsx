@@ -19,14 +19,11 @@ function LogViewer() {
   });
 
   return (
-    <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #eee' }}>
+    <div className="card-panel">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h3 style={{ margin: 0, fontSize: 15 }}>
+        <h3 style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)' }}>
           Live logs
-          <span style={{
-            marginLeft: 8, fontSize: 11,
-            color: connected ? '#2e7d32' : '#c62828',
-          }}>
+          <span className={`status-badge ${connected ? 'ok' : 'critical'}`} style={{ marginLeft: 12 }}>
             {connected ? '● live' : '○ disconnected'}
           </span>
         </h3>
@@ -36,10 +33,12 @@ function LogViewer() {
               key={l}
               onClick={() => setFilter((f) => ({ ...f, level: l }))}
               style={{
-                fontSize: 11, padding: '2px 10px', borderRadius: 20, cursor: 'pointer',
-                border: '1px solid #ddd',
-                background: filter.level === l ? '#111' : '#fff',
-                color:      filter.level === l ? '#fff' : '#333',
+                fontSize: 11, padding: '4px 12px', borderRadius: 20, cursor: 'pointer',
+                border: '1px solid',
+                borderColor: filter.level === l ? 'var(--accent-color)' : 'var(--border-color)',
+                background: filter.level === l ? 'var(--accent-color)' : 'var(--bg-base)',
+                color:      filter.level === l ? '#fff' : 'var(--text-secondary)',
+                transition: 'var(--transition)'
               }}
             >
               {l || 'all'}
@@ -49,18 +48,18 @@ function LogViewer() {
       </div>
 
       <div style={{
-        fontFamily: 'monospace', fontSize: 12,
+        fontFamily: "'JetBrains Mono', 'Fira Code', monospace", fontSize: 12,
         height: 320, overflowY: 'auto',
-        background: '#0d1117', borderRadius: 8, padding: 12,
+        background: 'var(--bg-base)', border: '1px solid var(--border-color)', borderRadius: 8, padding: 12,
       }}>
         {visible.length === 0 && (
-          <div style={{ color: '#666' }}>Waiting for logs...</div>
+          <div style={{ color: 'var(--text-secondary)' }}>Waiting for logs...</div>
         )}
         {visible.map((log, i) => {
           const style = LEVEL_COLORS[log.level] || LEVEL_COLORS.info;
           return (
             <div key={i} style={{ marginBottom: 4, lineHeight: 1.5 }}>
-              <span style={{ color: '#666' }}>
+              <span style={{ color: 'var(--text-secondary)' }}>
                 {new Date(log.timestamp).toLocaleTimeString()}&nbsp;
               </span>
               <span style={{
@@ -69,8 +68,8 @@ function LogViewer() {
               }}>
                 {log.level}
               </span>
-              <span style={{ color: '#8b949e' }}>&nbsp;[{log.service}]&nbsp;</span>
-              <span style={{ color: '#c9d1d9' }}>{log.message}</span>
+              <span style={{ color: 'var(--text-secondary)', opacity: 0.8 }}>&nbsp;[{log.service}]&nbsp;</span>
+              <span style={{ color: 'var(--text-primary)' }}>{log.message}</span>
             </div>
           );
         })}

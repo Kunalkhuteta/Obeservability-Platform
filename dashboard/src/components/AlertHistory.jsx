@@ -34,27 +34,28 @@ function AlertHistory({ events }) {
               display: 'flex', alignItems: 'center',
               justifyContent: 'space-between',
               padding: '12px 16px', borderRadius: 8,
-              background: isCritical ? '#fff5f5' : '#fffbeb',
-              border: `1px solid ${isCritical ? '#fecaca' : '#fde68a'}`,
+              background: isCritical ? 'var(--danger-light)' : 'var(--warning-light)',
+              border: `1px solid ${isCritical ? 'var(--danger-color)' : 'var(--warning-color)'}`,
+              opacity: 0.9,
             }}
           >
             {/* Left side — rule name + metric value */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <div style={{
                 width: 8, height: 8, borderRadius: '50%',
-                background: isCritical ? '#dc2626' : '#f59e0b',
+                background: isCritical ? 'var(--danger-color)' : 'var(--warning-color)',
                 flexShrink: 0,
               }} />
               <div>
-                <div style={{ fontSize: 14, fontWeight: 500 }}>{event.name}</div>
-                <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--text-primary)' }}>{event.name}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
                   {event.metric} = <strong>{parseFloat(event.value).toFixed(2)}</strong>
                 </div>
               </div>
             </div>
 
             {/* Right side — time */}
-            <div style={{ fontSize: 12, color: '#999', flexShrink: 0 }}>
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)', flexShrink: 0 }}>
               {timeAgo(event.triggered_at)}
             </div>
           </div>

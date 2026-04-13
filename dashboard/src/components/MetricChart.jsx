@@ -18,13 +18,14 @@ function MetricChart({ name, color = '#4f46e5', title }) {
   }));
 
   return (
-    <div style={{ background: '#fff', borderRadius: 12, padding: 20, border: '1px solid #eee' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h3 style={{ margin: 0, fontSize: 15, color: '#111' }}>{title || name}</h3>
+    <div className="card-panel interactive">
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
+        <h3 style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)' }}>{title || name}</h3>
         <select
           value={range}
           onChange={(e) => setRange(e.target.value)}
-          style={{ fontSize: 12, border: '1px solid #ddd', borderRadius: 6, padding: '2px 8px' }}
+          className="input-base"
+          style={{ width: 'auto', fontSize: 12, padding: '4px 8px' }}
         >
           <option value="15m">15 min</option>
           <option value="1h">1 hour</option>
@@ -33,16 +34,16 @@ function MetricChart({ name, color = '#4f46e5', title }) {
         </select>
       </div>
 
-      {loading && <div style={{ color: '#999', fontSize: 13 }}>Loading...</div>}
-      {error   && <div style={{ color: 'red',  fontSize: 13 }}>{error}</div>}
+      {loading && <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Loading...</div>}
+      {error   && <div style={{ color: 'var(--danger-color)',  fontSize: 13 }}>{error}</div>}
 
       {!loading && !error && (
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={formatted}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-            <XAxis dataKey="time" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
-            <Tooltip />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--chart-grid)" vertical={false} />
+            <XAxis dataKey="time" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickLine={false} axisLine={false} />
+            <YAxis tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} tickLine={false} axisLine={false} />
+            <Tooltip contentStyle={{ backgroundColor: 'var(--bg-card)', borderColor: 'var(--border-color)', color: 'var(--text-primary)', borderRadius: 8 }} />
             <Line
               type="monotone"
               dataKey="value"
