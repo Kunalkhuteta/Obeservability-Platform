@@ -8,7 +8,8 @@ export function useLiveLogs(maxLogs = 200) {
   const wsRef = useRef(null);
 
   useEffect(() => {
-    const WS_URL = `ws://${window.location.hostname}:4001/ws/logs`;
+    // Rely on window.location.host to grab the active minikube port, NGINX handles routing the /ws/ prefix
+    const WS_URL = `ws://${window.location.host}/ws/logs`;
     const ws     = new WebSocket(WS_URL);
     wsRef.current = ws;
 
