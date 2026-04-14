@@ -48,8 +48,8 @@ function CreateRuleForm({ onSubmit, loading }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="card-panel" style={{ marginBottom: 24, padding: 24 }}>
-      <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 16, color: 'var(--text-primary)' }}>
+    <form onSubmit={handleSubmit} className="card" style={{ marginBottom: 24 }}>
+      <div className="card-title">
         Create new alert rule
       </div>
 

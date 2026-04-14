@@ -18,14 +18,14 @@ function MetricChart({ name, color = '#4f46e5', title }) {
   }));
 
   return (
-    <div className="card-panel interactive">
+    <div className="card chart-card">
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12, alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)' }}>{title || name}</h3>
+        <div className="card-title">{title || name}</div>
         <select
           value={range}
           onChange={(e) => setRange(e.target.value)}
           className="input-base"
-          style={{ width: 'auto', fontSize: 12, padding: '4px 8px' }}
+          style={{ width: 'auto', fontSize: 12, padding: '4px 30px 4px 10px' }}
         >
           <option value="15m">15 min</option>
           <option value="1h">1 hour</option>
@@ -34,7 +34,7 @@ function MetricChart({ name, color = '#4f46e5', title }) {
         </select>
       </div>
 
-      {loading && <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>Loading...</div>}
+      {loading && <div style={{ color: 'var(--text-3)', fontSize: 13 }}>Loading...</div>}
       {error   && <div style={{ color: 'var(--danger-color)',  fontSize: 13 }}>{error}</div>}
 
       {!loading && !error && (

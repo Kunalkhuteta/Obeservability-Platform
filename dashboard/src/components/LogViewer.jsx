@@ -19,14 +19,14 @@ function LogViewer() {
   });
 
   return (
-    <div className="card-panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <h3 style={{ margin: 0, fontSize: 15, color: 'var(--text-primary)' }}>
+    <div className="card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <div className="card-title" style={{ marginBottom: 0 }}>
           Live logs
           <span className={`status-badge ${connected ? 'ok' : 'critical'}`} style={{ marginLeft: 12 }}>
             {connected ? '● live' : '○ disconnected'}
           </span>
-        </h3>
+        </div>
         <div style={{ display: 'flex', gap: 8 }}>
           {['', 'debug', 'info', 'warn', 'error'].map((l) => (
             <button
