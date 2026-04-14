@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stream-processor
+  labels:
+    app: stream-processor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stream-processor
+  template:
+    metadata:
+      labels:
+        app: stream-processor
+    spec:
+      containers:
+        - name: stream-processor
+          image: stream-processor:latest
+          imagePullPolicy: Never
+          env:
+            - name: REDIS_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: REDIS_URL
+            - name: INFLUX_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INFLUX_URL
+            - name: INFLUX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: observability-secrets
+                  key: influx-token
+            - name: INFLUX_ORG
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INFLUX_ORG
+            - name: INFLUX_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INFLUX_BUCKET
+            - name: ELASTICSEARCH_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: ELASTICSEARCH_URL
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"

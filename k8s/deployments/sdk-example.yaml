@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sdk-example
+  labels:
+    app: sdk-example
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sdk-example
+  template:
+    metadata:
+      labels:
+        app: sdk-example
+    spec:
+      containers:
+        - name: sdk-example
+          image: sdk-example:latest
+          imagePullPolicy: Never
+          env:
+            - name: INGESTION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INGESTION_URL

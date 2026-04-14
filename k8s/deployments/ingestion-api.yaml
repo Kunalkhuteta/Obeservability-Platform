@@ -16,21 +16,29 @@ spec:
     spec:
       containers:
         - name: ingestion-api
-          image: your-registry/ingestion-api:latest
+          image: ingestion-api:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 4000
           env:
             - name: REDIS_URL
               valueFrom:
-                secretKeyRef:
-                  name: observability-secrets
-                  key: redis-url
+                configMapKeyRef:
+                  name: observability-config
+                  key: REDIS_URL
+            - name: INGESTION_API_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INGESTION_API_PORT
           livenessProbe:
             httpGet:
               path: /health
               port: 4000
             initialDelaySeconds: 10
             periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 5
           resources:
             requests:
               cpu: "100m"

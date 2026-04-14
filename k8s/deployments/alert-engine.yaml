@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alert-engine
+  labels:
+    app: alert-engine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: alert-engine
+  template:
+    metadata:
+      labels:
+        app: alert-engine
+    spec:
+      containers:
+        - name: alert-engine
+          image: alert-engine:latest
+          imagePullPolicy: Never
+          env:
+            - name: INFLUX_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INFLUX_URL
+            - name: INFLUX_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: observability-secrets
+                  key: influx-token
+            - name: INFLUX_ORG
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INFLUX_ORG
+            - name: INFLUX_BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INFLUX_BUCKET
+            - name: POSTGRES_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: POSTGRES_URL
+            - name: SLACK_WEBHOOK_URL
+              value: "https://hooks.slack.com/services/dummy"
