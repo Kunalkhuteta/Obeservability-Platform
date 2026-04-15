@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ebpf-agent
+  labels:
+    app: ebpf-agent
+spec:
+  selector:
+    matchLabels:
+      app: ebpf-agent
+  template:
+    metadata:
+      labels:
+        app: ebpf-agent
+    spec:
+      hostNetwork: true
+      hostPID: true
+      containers:
+        - name: ebpf-agent
+          image: ebpf-agent:latest
+          imagePullPolicy: Never
+          securityContext:
+            privileged: true
+            capabilities:
+              add:
+                - SYS_ADMIN
+                - NET_ADMIN
+          env:
+            - name: INGESTION_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: observability-config
+                  key: INGESTION_URL
+          volumeMounts:
+            - name: sys-kernel-debug
+              mountPath: /sys/kernel/debug
+            - name: sys-fs-bpf
+              mountPath: /sys/fs/bpf
+      volumes:
+        - name: sys-kernel-debug
+          hostPath:
+            path: /sys/kernel/debug
+            type: DirectoryOrCreate
+        - name: sys-fs-bpf
+          hostPath:
+            path: /sys/fs/bpf
+            type: DirectoryOrCreate
