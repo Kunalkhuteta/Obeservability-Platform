@@ -15,6 +15,7 @@ spec:
     spec:
       hostNetwork: true
       hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: ebpf-agent
           image: ebpf-agent:latest
