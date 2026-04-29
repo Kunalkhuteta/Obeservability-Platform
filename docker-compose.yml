@@ -183,6 +183,23 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  ebpf-agent:
+    build:
+      context: ./ebpf-agent
+      dockerfile: Dockerfile
+    privileged: true
+    pid: "host"
+    environment:
+      - INGESTION_URL=http://ingestion-api:4000
+    volumes:
+      - /sys/kernel/debug:/sys/kernel/debug
+      - /sys/fs/bpf:/sys/fs/bpf
+      - /lib/modules:/lib/modules:ro
+    depends_on:
+      ingestion-api:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   redis_data:
   influx_data:
