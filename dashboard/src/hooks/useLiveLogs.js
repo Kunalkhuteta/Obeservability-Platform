@@ -8,29 +8,50 @@ export function useLiveLogs(maxLogs = 200) {
   const wsRef = useRef(null);
 
   useEffect(() => {
-    // Rely on window.location.host to grab the active minikube port, NGINX handles routing the /ws/ prefix
-    const WS_URL = `ws://${window.location.host}/ws/logs`;
-    const ws     = new WebSocket(WS_URL);
-    wsRef.current = ws;
+    let active = true;
+    let reconnectTimer = null;
 
-    ws.onopen = () => {
-      setConnected(true);
-      console.log('[ws] connected to live log stream');
+    function connect() {
+      if (!active) return;
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const WS_URL = `${proto}//${window.location.host}/ws/logs`;
+      const ws = new WebSocket(WS_URL);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        if (!active) return;
+        setConnected(true);
+        console.log('[ws] connected to live log stream');
+      };
+
+      ws.onmessage = (evt) => {
+        if (!active) return;
+        const entry = JSON.parse(evt.data);
+        setLogs((prev) => {
+          const next = [entry, ...prev];
+          return next.length > maxLogs ? next.slice(0, maxLogs) : next;
+        });
+      };
+
+      ws.onclose = () => {
+        if (!active) return;
+        setConnected(false);
+        reconnectTimer = setTimeout(connect, 2000);
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
+    }
+
+    connect();
+
+    return () => {
+      active = false;
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (wsRef.current) wsRef.current.close();
     };
-
-    ws.onmessage = (evt) => {
-      const entry = JSON.parse(evt.data);
-      setLogs((prev) => {
-        const next = [entry, ...prev];        // prepend newest
-        return next.length > maxLogs ? next.slice(0, maxLogs) : next;
-      });
-    };
-
-    ws.onclose = () => setConnected(false);
-    ws.onerror = () => setConnected(false);
-
-    return () => ws.close();
-  }, []);
+  }, [maxLogs]);
 
   return { logs, connected };
 }

@@ -21,6 +21,7 @@ export const AlertsAPI = {
   getHistory: ()       => api.get('/alerts/history').then(r => r.data),
   createRule: (rule)   => api.post('/alerts', rule).then(r => r.data),
   toggleRule: (id, en) => api.patch(`/alerts/${id}`, { enabled: en }).then(r => r.data),
+  deleteRule: (id)     => api.delete(`/alerts/${id}`).then(r => r.data),
 };
 
 export const SummaryAPI = {

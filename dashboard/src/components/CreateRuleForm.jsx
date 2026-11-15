@@ -41,7 +41,7 @@ function CreateRuleForm({ onSubmit, loading }) {
     onSubmit({
       ...form,
       threshold:  parseFloat(form.threshold),
-      duration_s: parseInt(form.duration_s),
+      duration_s: parseInt(form.duration_s, 10) || 60,
     });
 
     setForm(DEFAULT); // reset form after submit

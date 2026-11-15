@@ -40,10 +40,11 @@ function formatCondition(condition, threshold) {
 // Main table component
 // rules:    array of alert rule objects from the API
 // onToggle: called when user flips the enable/disable switch
-function AlertsTable({ rules, onToggle }) {
+// onDelete: called when user clicks delete
+function AlertsTable({ rules, onToggle, onDelete }) {
   if (!rules || rules.length === 0) {
     return (
-      <div style={{ color: '#999', fontSize: 14, padding: '20px 0' }}>
+      <div style={{ color: '#999', fontSize: 14, padding: '20px' }}>
         No alert rules yet. Create one above.
       </div>
     );
@@ -54,8 +55,8 @@ function AlertsTable({ rules, onToggle }) {
       <table className="data-table">
         <thead>
           <tr>
-            {['Name', 'Metric', 'Condition', 'Duration', 'Severity', 'Enabled'].map((h) => (
-              <th key={h}>{h}</th>
+            {['Name', 'Metric', 'Condition', 'Duration', 'Severity', 'Enabled', ''].map((h, i) => (
+              <th key={i}>{h}</th>
             ))}
           </tr>
         </thead>
@@ -74,7 +75,7 @@ function AlertsTable({ rules, onToggle }) {
               <td style={{ fontFamily: 'monospace' }}>
                 {formatCondition(rule.condition, rule.threshold)}
               </td>
-              <td style={{ color: 'var(--text-secondary)' }}>
+              <td style={{ color: 'var(--text-2)' }}>
                 {rule.duration_s}s
               </td>
               <td>
@@ -85,6 +86,20 @@ function AlertsTable({ rules, onToggle }) {
                   enabled={rule.enabled}
                   onChange={() => onToggle(rule.id, !rule.enabled)}
                 />
+              </td>
+              <td style={{ textAlign: 'right' }}>
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(rule.id)}
+                    style={{
+                      fontSize: 11, padding: '4px 10px', borderRadius: 6,
+                      border: '1px solid var(--border)', background: 'transparent',
+                      color: 'var(--danger-color)', cursor: 'pointer',
+                    }}
+                  >
+                    Delete
+                  </button>
+                )}
               </td>
             </tr>
           ))}

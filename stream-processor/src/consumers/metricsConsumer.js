@@ -13,17 +13,28 @@ const writeApi = influx.getWriteApi(
   'ms' // timestamp precision
 );
 
-const STREAM  = 'stream:metrics';
-const GROUP   = 'processor-group';
+const STREAM   = 'stream:metrics';
+const GROUP    = 'processor-group';
 const CONSUMER = 'metrics-consumer-1';
-const BATCH   = 100; // read up to 100 messages at a time
+const BATCH    = 100; // read up to 100 messages at a time
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function extractFieldData(fields) {
+  const idx = fields.indexOf('data');
+  return idx >= 0 ? fields[idx + 1] : fields[1];
+}
 
 async function setupGroup() {
-  try {
-    await redis.xgroup('CREATE', STREAM, GROUP, '$', 'MKSTREAM');
-  } catch (err) {
-    if (!err.message.includes('BUSYGROUP')) throw err;
-    // Group already exists — that's fine
+  while (true) {
+    try {
+      await redis.xgroup('CREATE', STREAM, GROUP, '0', 'MKSTREAM');
+      return;
+    } catch (err) {
+      if (err.message.includes('BUSYGROUP')) return;
+      console.error('[metrics-consumer] waiting for Redis:', err.message);
+      await sleep(2000);
+    }
   }
 }
 
@@ -32,52 +43,57 @@ async function processMetrics() {
   console.log('[metrics-consumer] listening on', STREAM);
 
   while (true) {
-    // XREADGROUP blocks for up to 2s waiting for new messages
-    const results = await redis.xreadgroup(
-      'GROUP', GROUP, CONSUMER,
-      'COUNT', BATCH,
-      'BLOCK', 2000,
-      'STREAMS', STREAM, '>'
-    );
+    try {
+      // XREADGROUP blocks for up to 2s waiting for new messages
+      const results = await redis.xreadgroup(
+        'GROUP', GROUP, CONSUMER,
+        'COUNT', BATCH,
+        'BLOCK', 2000,
+        'STREAMS', STREAM, '>'
+      );
 
-    if (!results) continue; // timeout — loop again
+      if (!results) continue; // timeout — loop again
 
-    const [, messages] = results[0];
+      const [, messages] = results[0];
 
-    const points = [];
-    const ids = [];
+      const points = [];
+      const ids = [];
 
-    for (const [id, fields] of messages) {
-      try {
-        const metric = JSON.parse(fields[1]); // fields = ['data', '{...}']
+      for (const [id, fields] of messages) {
+        try {
+          const metric = JSON.parse(extractFieldData(fields)); // fields = ['data', '{...}']
 
-        const point = new Point(metric.name)
-          .floatField('value', metric.value)
-          .timestamp(new Date(metric.timestamp));
+          const point = new Point(metric.name)
+            .floatField('value', metric.value)
+            .timestamp(new Date(metric.timestamp));
 
-        // Add all tags (host, env, service, etc.)
-        for (const [k, v] of Object.entries(metric.tags || {})) {
-          point.tag(k, String(v));
+          // Add all tags (host, env, service, etc.)
+          for (const [k, v] of Object.entries(metric.tags || {})) {
+            point.tag(k, String(v));
+          }
+
+          points.push(point);
+          ids.push(id);
+        } catch (err) {
+          console.error('[metrics-consumer] parse error:', err.message);
+          ids.push(id); // still ACK bad messages so they don't block
         }
-
-        points.push(point);
-        ids.push(id);
-      } catch (err) {
-        console.error('[metrics-consumer] parse error:', err.message);
-        ids.push(id); // still ACK bad messages so they don't block
       }
-    }
 
-    // Write to InfluxDB in one batch
-    if (points.length > 0) {
-      writeApi.writePoints(points);
-      await writeApi.flush();
-      console.log(`[metrics-consumer] wrote ${points.length} points`);
-    }
+      // Write to InfluxDB in one batch
+      if (points.length > 0) {
+        writeApi.writePoints(points);
+        await writeApi.flush();
+        console.log(`[metrics-consumer] wrote ${points.length} points`);
+      }
 
-    // ACK processed messages so they're removed from the pending list
-    if (ids.length > 0) {
-      await redis.xack(STREAM, GROUP, ...ids);
+      // ACK processed messages so they're removed from the pending list
+      if (ids.length > 0) {
+        await redis.xack(STREAM, GROUP, ...ids);
+      }
+    } catch (err) {
+      console.error('[metrics-consumer] error:', err.message);
+      await sleep(2000);
     }
   }
 }

@@ -63,10 +63,13 @@ router.post('/', async (req, res) => {
       return res.status(503).json({ error: 'Database unavailable' });
     }
     const { name, metric, condition, threshold, duration_s = 60, severity = 'warning' } = req.body;
+    if (!name || !metric || !['gt', 'lt', 'eq'].includes(condition) || Number.isNaN(Number(threshold))) {
+      return res.status(400).json({ error: 'Invalid alert rule fields' });
+    }
     const result = await pg.query(
       `INSERT INTO alert_rules (name, metric, condition, threshold, duration_s, severity)
        VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [name, metric, condition, threshold, duration_s, severity]
+      [name, metric, condition, Number(threshold), parseInt(duration_s, 10) || 60, severity]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -86,9 +89,26 @@ router.patch('/:id', async (req, res) => {
       'UPDATE alert_rules SET enabled=$1 WHERE id=$2 RETURNING *',
       [enabled, req.params.id]
     );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
     res.json(result.rows[0]);
   } catch (err) {
     console.error('[alerts] PATCH /:id error:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /v1/alerts/:id — delete a rule and its events
+router.delete('/:id', async (req, res) => {
+  try {
+    if (!(await ensureTablesExist())) {
+      return res.status(503).json({ error: 'Database unavailable' });
+    }
+    await pg.query('DELETE FROM alert_events WHERE rule_id=$1', [req.params.id]);
+    const result = await pg.query('DELETE FROM alert_rules WHERE id=$1 RETURNING *', [req.params.id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Rule not found' });
+    res.json({ deleted: true, rule: result.rows[0] });
+  } catch (err) {
+    console.error('[alerts] DELETE /:id error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

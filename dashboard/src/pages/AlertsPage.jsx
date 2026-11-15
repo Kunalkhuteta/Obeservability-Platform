@@ -35,8 +35,11 @@ function AlertsPage() {
   useEffect(() => {
     fetchRules();
     fetchHistory();
-    // Refresh history every 30 seconds automatically
-    const id = setInterval(fetchHistory, 30_000);
+    // Refresh rules and history every 5 seconds in real time
+    const id = setInterval(() => {
+      fetchRules();
+      fetchHistory();
+    }, 5_000);
     return () => clearInterval(id);
   }, [fetchRules, fetchHistory]);
 
@@ -73,6 +76,17 @@ function AlertsPage() {
         prev.map((r) => r.id === id ? { ...r, enabled: !enabled } : r)
       );
       setError('Failed to update rule');
+    }
+  }
+
+  // ── Delete rule ───────────────────────────────────────────────────────────
+  async function handleDelete(id) {
+    try {
+      await AlertsAPI.deleteRule(id);
+      setRules((prev) => prev.filter((r) => r.id !== id));
+      fetchHistory();
+    } catch (err) {
+      setError('Failed to delete rule: ' + err.message);
     }
   }
 
@@ -148,7 +162,7 @@ function AlertsPage() {
             <span style={{ fontSize: 11, color: 'var(--text-3)', marginLeft: 8, textTransform: 'none' }}>loading...</span>
           )}
         </div>
-        <AlertsTable rules={rules} onToggle={handleToggle} />
+        <AlertsTable rules={rules} onToggle={handleToggle} onDelete={handleDelete} />
       </div>
 
       {/* ── Alert history ─────────────────────────────────────────────────── */}

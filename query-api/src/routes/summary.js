@@ -12,11 +12,13 @@ router.get('/', async (req, res) => {
       new Promise((resolve) => {
         const vals = {};
         influxQuery.queryRows(
-          `from(bucket: "${BUCKET}") |> range(start: -5m) |> last()`,
+          `from(bucket: "${BUCKET}") |> range(start: -5m) |> keep(columns: ["_time", "_value", "_measurement"]) |> group(columns: ["_measurement"]) |> sort(columns: ["_time"]) |> last()`,
           {
             next(row, meta) {
               const obj = meta.toObject(row);
-              vals[obj._measurement] = parseFloat(obj._value?.toFixed(2) ?? 0);
+              if (obj._value != null) {
+                vals[obj._measurement] = parseFloat(Number(obj._value).toFixed(2));
+              }
             },
             error: () => resolve({}),
             complete: () => resolve(vals),

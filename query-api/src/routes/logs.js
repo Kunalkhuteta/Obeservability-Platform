@@ -2,6 +2,10 @@ const express = require('express');
 const { elastic } = require('../clients');
 const router = express.Router();
 
+function isIndexMissing(err) {
+  return err?.meta?.body?.error?.type === 'index_not_found_exception';
+}
+
 // GET /v1/logs?service=my-api&level=error&q=timeout&from=0&size=50
 // Full-text search across all logs — powers the log explorer
 router.get('/', async (req, res) => {
@@ -27,6 +31,7 @@ router.get('/', async (req, res) => {
       logs: result.hits.hits.map((h) => ({ id: h._id, ...h._source })),
     });
   } catch (err) {
+    if (isIndexMissing(err)) return res.json({ total: 0, from: parseInt(from), logs: [] });
     res.status(500).json({ error: err.message });
   }
 });
@@ -44,6 +49,7 @@ router.get('/services', async (req, res) => {
     const services = result.aggregations.services.buckets.map((b) => b.key);
     res.json(services);
   } catch (err) {
+    if (isIndexMissing(err)) return res.json([]);
     res.status(500).json({ error: err.message });
   }
 });
@@ -67,6 +73,7 @@ router.get('/counts', async (req, res) => {
     });
     res.json(counts);
   } catch (err) {
+    if (isIndexMissing(err)) return res.json({});
     res.status(500).json({ error: err.message });
   }
 });

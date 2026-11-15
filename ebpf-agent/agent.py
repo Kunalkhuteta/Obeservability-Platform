@@ -72,22 +72,30 @@ while True:
             err_rate = 7 if random.random() < 0.05 else 0
 
         metrics = [
-            {"name": "cpu_usage", "value": cpu},
+            {"name": "cpu_usage", "value": round(float(cpu), 2)},
             {"name": "response_time_ms", "value": latency},
             {"name": "error_rate_pct", "value": err_rate},
             {"name": "http_requests_total", "value": total_requests},
         ]
-        
-        for m in metrics:
-            requests.post(f"{INGESTION_URL}/v1/metrics", json={
-                "service": "k8s-kernel-agent",
-                "env": "production",
+
+        instrumentation = "ebpf" if mode == "ebpf" else "ebpf-emulated"
+        payload = [
+            {
                 "name": m["name"],
                 "value": m["value"],
-                "tags": {"instrumentation": "ebpf" if mode == "ebpf" else "ebpf-emulated"}
-            }, timeout=2)
-            
-        logger.info(f"Intercepted network behavior => [Reqs: {total_requests}, Latency: {latency}ms, CPU: {cpu}%%, Err: {err_rate}%%]")
+                "tags": {
+                    "service": "k8s-kernel-agent",
+                    "env": "production",
+                    "instrumentation": instrumentation,
+                },
+            }
+            for m in metrics
+        ]
+
+        resp = requests.post(f"{INGESTION_URL}/v1/metrics", json=payload, timeout=2)
+        resp.raise_for_status()
+
+        logger.info(f"Intercepted network behavior => [Reqs: {total_requests}, Latency: {latency}ms, CPU: {cpu:.1f}%, Err: {err_rate}%]")
         
     except Exception as network_error:
         logger.error(f"Failed to push metrics to ingestion queue: {network_error}")

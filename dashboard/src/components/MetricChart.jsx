@@ -5,12 +5,21 @@ import {
 } from 'recharts';
 import { useMetricSeries } from '../hooks/useMetrics';
 
+const RANGE_WINDOWS = {
+  '5m':  '5s',
+  '15m': '10s',
+  '1h':  '30s',
+  '6h':  '5m',
+  '24h': '15m',
+};
+
 // Renders a time-series line chart for any metric
 // name:  metric name, e.g. "cpu_usage"
 // color: line color
 function MetricChart({ name, color = '#4f46e5', title }) {
-  const [range, setRange] = useState('1h');
-  const { data, loading, error } = useMetricSeries(name, range);
+  const [range, setRange] = useState('15m');
+  const window = RANGE_WINDOWS[range] || '30s';
+  const { data, loading, error } = useMetricSeries(name, range, window);
 
   const formatted = data.map((p) => ({
     ...p,
@@ -27,6 +36,7 @@ function MetricChart({ name, color = '#4f46e5', title }) {
           className="input-base"
           style={{ width: 'auto', fontSize: 12, padding: '4px 30px 4px 10px' }}
         >
+          <option value="5m">5 min</option>
           <option value="15m">15 min</option>
           <option value="1h">1 hour</option>
           <option value="6h">6 hours</option>

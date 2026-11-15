@@ -11,6 +11,10 @@ const db = new Pool({
   connectionString: process.env.POSTGRES_URL || 'postgresql://postgres:postgres@127.0.0.1:5434/alerts',
 });
 
+db.on('error', (err) => {
+  console.error('[pg] unexpected error:', err.message);
+});
+
 async function getAlertRules() {
   const result = await db.query(
     'SELECT * FROM alert_rules WHERE enabled = true'
@@ -23,6 +27,8 @@ async function queryLatestMetric(metricName, durationSeconds) {
     from(bucket: "${process.env.INFLUX_BUCKET || 'metrics'}")
       |> range(start: -${durationSeconds}s)
       |> filter(fn: (r) => r._measurement == "${metricName}")
+      |> keep(columns: ["_time", "_value", "_measurement"])
+      |> group()
       |> mean()
   `;
 
@@ -31,7 +37,7 @@ async function queryLatestMetric(metricName, durationSeconds) {
     queryApi.queryRows(flux, {
       next(row, tableMeta) {
         const obj = tableMeta.toObject(row);
-        avg = obj._value;
+        if (obj._value != null) avg = obj._value;
       },
       error: reject,
       complete() { resolve(avg); },
@@ -51,21 +57,40 @@ async function evaluateAllRules() {
   console.log(`[evaluator] checking ${rules.length} rules...`);
 
   for (const rule of rules) {
-    const value = await queryLatestMetric(rule.metric, rule.duration_s);
+    try {
+      const value = await queryLatestMetric(rule.metric, rule.duration_s);
 
-    if (value === null) continue; // no data yet
+      if (value === null) continue; // no data yet
 
-    if (breaches(value, rule.condition, parseFloat(rule.threshold))) {
-      console.warn(`[ALERT] ${rule.name} — ${rule.metric}=${value} (threshold=${rule.threshold})`);
-
-      await db.query(
-        'INSERT INTO alert_events (rule_id, value, message) VALUES ($1, $2, $3)',
-        [rule.id, value, `${rule.name}: ${rule.metric} is ${value}`]
+      const openEventRes = await db.query(
+        'SELECT id FROM alert_events WHERE rule_id = $1 AND resolved_at IS NULL ORDER BY triggered_at DESC LIMIT 1',
+        [rule.id]
       );
+      const hasOpenEvent = openEventRes.rows.length > 0;
 
-      if (rule.channel === 'slack' && process.env.SLACK_WEBHOOK_URL) {
-        await sendSlackAlert(rule, value);
+      if (breaches(value, rule.condition, parseFloat(rule.threshold))) {
+        if (!hasOpenEvent) {
+          const rounded = Number(value).toFixed(2);
+          console.warn(`[ALERT] ${rule.name} — ${rule.metric}=${rounded} (threshold=${rule.threshold})`);
+
+          await db.query(
+            'INSERT INTO alert_events (rule_id, value, message) VALUES ($1, $2, $3)',
+            [rule.id, value, `${rule.name}: ${rule.metric} is ${rounded}`]
+          );
+
+          if (rule.channel === 'slack') {
+            await sendSlackAlert(rule, value);
+          }
+        }
+      } else if (hasOpenEvent) {
+        await db.query(
+          'UPDATE alert_events SET resolved_at = NOW() WHERE rule_id = $1 AND resolved_at IS NULL',
+          [rule.id]
+        );
+        console.log(`[RESOLVED] ${rule.name} — ${rule.metric}=${Number(value).toFixed(2)}`);
       }
+    } catch (err) {
+      console.error(`[evaluator] rule "${rule.name}" check failed:`, err.message);
     }
   }
 }
